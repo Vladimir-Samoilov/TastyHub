@@ -1,14 +1,14 @@
 from rest_framework import serializers
 from .models import (
-    Recipe, Tag, Ingredient, IngredientInRecipe,
-    Favorite, ShoppingCart
+    Recipe, Tag, Ingredient, IngredientInRecipe
 )
+from users.serializers import Base64ImageField
 
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = '__all__'
+        fields = ('id', 'name', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -23,6 +23,7 @@ class IngredientInRecipeReadSerializer(serializers.ModelSerializer):
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit'
     )
+    amount = serializers.IntegerField()
 
     class Meta:
         model = IngredientInRecipe
@@ -31,8 +32,10 @@ class IngredientInRecipeReadSerializer(serializers.ModelSerializer):
 
 class IngredientInRecipeWriteSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredient.objects.all(), source='ingredient'
+        queryset=Ingredient.objects.all(),
+        source='ingredient'
     )
+    amount = serializers.IntegerField()
 
     class Meta:
         model = IngredientInRecipe
@@ -42,10 +45,12 @@ class IngredientInRecipeWriteSerializer(serializers.ModelSerializer):
 class RecipeReadSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     author = serializers.SerializerMethodField()
-    ingredients = serializers.SerializerMethodField()
+    ingredients = IngredientInRecipeReadSerializer(
+        many=True, source='ingredient_amounts'
+    )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-    image = serializers.ImageField()
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -57,10 +62,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     def get_author(self, obj):
         from users.serializers import UserSerializer
         return UserSerializer(obj.author, context=self.context).data
-
-    def get_ingredients(self, obj):
-        ingredients = IngredientInRecipe.objects.filter(recipe=obj)
-        return IngredientInRecipeReadSerializer(ingredients, many=True).data
 
     def get_is_favorited(self, obj):
         user = self.context['request'].user
@@ -80,29 +81,26 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Tag.objects.all()
     )
-    image = serializers.ImageField()
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = (
-            'name', 'image', 'text', 'cooking_time',
+            'id', 'name', 'image', 'text', 'cooking_time',
             'ingredients', 'tags',
         )
-
-    def create_ingredients(self, ingredients, recipe):
-        for ing in ingredients:
-            IngredientInRecipe.objects.create(
-                recipe=recipe,
-                ingredient=ing['ingredient'],
-                amount=ing['amount']
-            )
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
-        self.create_ingredients(ingredients, recipe)
+        for ing in ingredients:
+            IngredientInRecipe.objects.create(
+                recipe=recipe,
+                ingredient=ing['ingredient'],
+                amount=ing['amount']
+            )
         return recipe
 
     def update(self, instance, validated_data):
@@ -110,7 +108,12 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         tags = validated_data.pop('tags')
         instance.tags.set(tags)
         IngredientInRecipe.objects.filter(recipe=instance).delete()
-        self.create_ingredients(ingredients, instance)
+        for ing in ingredients:
+            IngredientInRecipe.objects.create(
+                recipe=instance,
+                ingredient=ing['ingredient'],
+                amount=ing['amount']
+            )
         return super().update(instance, validated_data)
 
 

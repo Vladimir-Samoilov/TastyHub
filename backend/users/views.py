@@ -1,10 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework import permissions, status
 from django.shortcuts import get_object_or_404
 
 from .models import CustomUser, Subscription
 from .serializers import SubscriptionSerializer
+from .serializers import UserSerializer
 
 
 class SubscribeView(APIView):
@@ -66,3 +69,31 @@ class SubscriptionsView(APIView):
         paginator = PageNumberPagination()
         paginator.page_size = 6
         return paginator.get_paginated_response(data)
+
+
+class AvatarView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user, context={'request': request})
+        return Response({'avatar': serializer.data['avatar']}, status=200)
+
+    def put(self, request):
+        user = request.user
+        avatar = request.data.get('avatar')
+        if not avatar:
+            return Response({'errors': 'No file provided'}, status=400)
+        user.avatar = avatar
+        user.save()
+        serializer = UserSerializer(user, context={'request': request})
+        return Response({'avatar': serializer.data['avatar']}, status=200)
+
+    def delete(self, request):
+        user = request.user
+        avatar_name = str(user.avatar)
+        if avatar_name and not avatar_name.startswith('data:image'):
+            user.avatar.delete(save=True)
+        user.avatar = None
+        user.save()
+        return Response(status=204)

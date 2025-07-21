@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SubscribeView, SubscriptionsView
+from .views import SubscribeView, SubscriptionsView, AvatarView
 
 urlpatterns = [
     path(
@@ -10,4 +10,5 @@ urlpatterns = [
         'users/subscriptions/',
         SubscriptionsView.as_view(), name='subscriptions'
     ),
+    path('users/me/avatar/', AvatarView.as_view(), name='avatar'),
 ]

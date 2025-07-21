@@ -1,25 +1,38 @@
+import base64, uuid
 from djoser.serializers import (
     UserCreateSerializer as DjoserUserCreateSerializer,
     UserSerializer as DjoserUserSerializer
 )
 from rest_framework import serializers
+from django.core.files.base import ContentFile
+from rest_framework.exceptions import NotAuthenticated
 
 from .models import CustomUser, Subscription
 
 
+class Base64ImageField(serializers.ImageField):
+
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+            file_name = f"{uuid.uuid4()}.{ext}"
+            data = ContentFile(base64.b64decode(imgstr), name=file_name)
+        return super().to_internal_value(data)
+
+
 class UserCreateSerializer(DjoserUserCreateSerializer):
-    avatar = serializers.ImageField(required=False, allow_null=True)
 
     class Meta(DjoserUserCreateSerializer.Meta):
         model = CustomUser
         fields = (
             'id', 'email', 'username',
-            'first_name', 'last_name', 'password', 'avatar'
+            'first_name', 'last_name', 'password',
         )
 
 
 class UserSerializer(DjoserUserSerializer):
-    avatar = serializers.SerializerMethodField()
+    avatar = Base64ImageField(required=False, allow_null=True)
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -35,15 +48,19 @@ class UserSerializer(DjoserUserSerializer):
         return None
 
     def get_is_subscribed(self, obj):
-        user = self.context.get('request').user
-        return (
-            user.is_authenticated
-            and Subscription.objects.filter(user=user, author=obj).exists()
-        )
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if user and user.is_authenticated:
+            return Subscription.objects.filter(user=user, author=obj).exists()
+        return False
 
     def to_representation(self, instance):
-        print('Custom UserSerializer in action!')
-        return super().to_representation(instance)
+        if not hasattr(instance, 'email'):
+            raise NotAuthenticated()
+        data = super().to_representation(instance)
+        if data.get('avatar') == '':
+            data['avatar'] = None
+        return data
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
