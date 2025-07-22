@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . ./
-RUN npm run ci
+RUN npm run ci --legacy-peer-deps
 
 FROM nginx:1.25
 COPY --from=build /app/build/ /static/
