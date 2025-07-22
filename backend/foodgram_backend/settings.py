@@ -124,3 +124,7 @@ DJOSER = {
         'current_user': 'users.serializers.UserSerializer',
     },
 }
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://bestfoodgram.sytes.net',
+]
