@@ -1,9 +1,14 @@
-FROM node:21.7.1-alpine AS build
+FROM node:18
 WORKDIR /app
-COPY package*.json ./
-RUN npm install --legacy-peer-deps
-COPY . ./
-RUN npm run ci --legacy-peer-deps
 
-FROM nginx:1.25
-COPY --from=build /app/build/ /static/
+COPY package.json package.json
+COPY package-lock.json package-lock.json
+
+RUN npm ci --legacy-peer-deps
+
+COPY . .
+RUN npm run build
+
+RUN npm install --global http-server
+
+CMD ["npx", "-y", "http-server", "-p", "8000", "/app/build"]
