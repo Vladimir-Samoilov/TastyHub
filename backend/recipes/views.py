@@ -1,25 +1,21 @@
-from django.shortcuts import get_object_or_404
+from django.db.models import Sum
 from django.http import HttpResponse
-
-from rest_framework import viewsets, permissions, status
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 
-from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Sum
-
-from .models import (
-    Recipe, Tag, Ingredient, Favorite, ShoppingCart, IngredientInRecipe
-)
-from .serializers import (
-    RecipeReadSerializer, RecipeWriteSerializer, TagSerializer,
-    IngredientSerializer, FavoriteSerializer, ShoppingCartSerializer
-)
 from .filters import RecipeFilter
+from .models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                     ShoppingCart, Tag)
 from .permissions import IsAuthorOrReadOnly
+from .serializers import (FavoriteSerializer, IngredientSerializer,
+                          RecipeReadSerializer, RecipeWriteSerializer,
+                          ShoppingCartSerializer, TagSerializer)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):

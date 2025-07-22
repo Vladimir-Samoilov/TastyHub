@@ -1,12 +1,11 @@
 import base64
 import uuid
 
-from djoser.serializers import (
-    UserCreateSerializer as DjoserUserCreateSerializer,
-    UserSerializer as DjoserUserSerializer,
-)
-from rest_framework import serializers
 from django.core.files.base import ContentFile
+from djoser.serializers import \
+    UserCreateSerializer as DjoserUserCreateSerializer
+from djoser.serializers import UserSerializer as DjoserUserSerializer
+from rest_framework import serializers
 from rest_framework.exceptions import NotAuthenticated
 
 from .models import CustomUser, Subscription
