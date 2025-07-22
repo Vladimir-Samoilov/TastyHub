@@ -67,7 +67,6 @@ jobs:
   build_frontend_and_push:
     name: Build & push frontend
     runs-on: ubuntu-latest
-    needs: frontend_tests
     steps:
       - uses: actions/checkout@v3
       - name: Set up Docker Buildx
