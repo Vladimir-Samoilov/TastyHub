@@ -1,24 +1,25 @@
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
-from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
+
+from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Sum
 
 from .models import (
-    Recipe, Tag, Ingredient, Favorite, ShoppingCart
+    Recipe, Tag, Ingredient, Favorite, ShoppingCart, IngredientInRecipe
 )
 from .serializers import (
     RecipeReadSerializer, RecipeWriteSerializer, TagSerializer,
-    IngredientSerializer, FavoriteSerializer, ShoppingCartSerializer,
-    IngredientInRecipe
+    IngredientSerializer, FavoriteSerializer, ShoppingCartSerializer
 )
 from .filters import RecipeFilter
 from .permissions import IsAuthorOrReadOnly
-from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Sum
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -44,7 +45,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,
+        permissions.IsAuthenticatedOrReadOnly,
+        IsAuthorOrReadOnly,
     )
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipeFilter
@@ -57,20 +59,30 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[permissions.IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[permissions.IsAuthenticated]
+    )
     def favorite(self, request, pk):
         return self._handle_custom_action(
-            model=Favorite, serializer_class=FavoriteSerializer,
-            request=request, pk=pk
+            model=Favorite,
+            serializer_class=FavoriteSerializer,
+            request=request,
+            pk=pk
         )
 
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[permissions.IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[permissions.IsAuthenticated]
+    )
     def shopping_cart(self, request, pk):
         return self._handle_custom_action(
-            model=ShoppingCart, serializer_class=ShoppingCartSerializer,
-            request=request, pk=pk
+            model=ShoppingCart,
+            serializer_class=ShoppingCartSerializer,
+            request=request,
+            pk=pk
         )
 
     @action(
@@ -115,8 +127,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 user=user, recipe=recipe
             )
             if not created:
-                return Response({'errors': 'Уже добавлено.'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'errors': 'Уже добавлено.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             serializer = serializer_class(recipe, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
@@ -125,8 +139,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             ).delete()
             if deleted:
                 return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response({'errors': 'Не найдено в списке.'},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'errors': 'Не найдено в списке.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -145,7 +161,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial
+        )
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         read_serializer = RecipeReadSerializer(
@@ -154,7 +172,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(read_serializer.data)
 
     @action(
-        detail=True, methods=['get'],
+        detail=True,
+        methods=['get'],
         url_path='get-link',
         url_name='get-link'
     )
