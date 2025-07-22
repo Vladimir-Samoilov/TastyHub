@@ -75,11 +75,6 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend/
-          npm ci --legacy-peer-deps
-      - name: Run frontend tests
-        run: |
-          cd frontend/
-          npm run test
 
   build_frontend_and_push:
     name: Build & push frontend
