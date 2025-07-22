@@ -32,7 +32,7 @@ class UserCreateSerializer(DjoserUserCreateSerializer):
 
 
 class UserSerializer(DjoserUserSerializer):
-    avatar = Base64ImageField(required=False, allow_null=True)
+    avatar = Base64ImageField()
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -89,3 +89,11 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
+
+
+class AvatarUpdateSerializer(serializers.ModelSerializer):
+    avatar = Base64ImageField(required=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ('avatar',)

@@ -7,7 +7,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import CustomUser, Subscription
-from .serializers import SubscriptionSerializer, UserSerializer
+from .serializers import (
+    SubscriptionSerializer, UserSerializer, AvatarUpdateSerializer
+)
 
 
 class SubscribeView(APIView):
@@ -75,19 +77,18 @@ class AvatarView(APIView):
 
     def put(self, request):
         user = request.user
-        avatar = request.data.get('avatar')
-        if not avatar:
-            return Response({'errors': 'No file provided'}, status=400)
-        user.avatar = avatar
-        user.save()
-        serializer = UserSerializer(user, context={'request': request})
-        return Response({'avatar': serializer.data['avatar']}, status=200)
+        serializer = AvatarUpdateSerializer(
+            user, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'avatar': serializer.data['avatar']}, status=200)
+        return Response(serializer.errors, status=400)
 
     def delete(self, request):
         user = request.user
-        avatar_name = str(user.avatar)
-        if avatar_name and not avatar_name.startswith('data:image'):
+        if user.avatar:
             user.avatar.delete(save=True)
-        user.avatar = None
-        user.save()
+            user.avatar = None
+            user.save()
         return Response(status=204)

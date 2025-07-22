@@ -1,0 +1,47 @@
+version: '3.8'
+
+volumes:
+  pg_data:
+  static:
+  media:
+
+services:
+  db:
+    image: postgres:15
+    env_file:
+      - .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  backend:
+    image: vladimir757/foodgram_backend:latest
+    env_file:
+      - .env
+    volumes:
+      - static:/app/static
+      - media:/app/media
+    depends_on:
+      - db
+    command: >
+      sh -c "
+        sleep 10 &&
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        gunicorn foodgram_backend.wsgi:application --bind 0.0.0.0:8000
+      "
+
+  frontend:
+    image: vladimir757/foodgram_frontend:latest
+    volumes:
+      - static:/app/build
+
+  gateway:
+    image: vladimir757/foodgram_gateway:latest
+    ports:
+      - "9010:80"
+    volumes:
+      - static:/static
+      - media:/media
+    depends_on:
+      - backend
+      - frontend
