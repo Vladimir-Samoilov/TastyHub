@@ -22,9 +22,11 @@ class CustomUser(AbstractUser):
 
 class Subscription(models.Model):
     user = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name='follower')
+        CustomUser, on_delete=models.CASCADE, related_name='follower'
+    )
     author = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name='subscribers')
+        CustomUser, on_delete=models.CASCADE, related_name='subscribers'
+    )
 
     class Meta:
         constraints = [

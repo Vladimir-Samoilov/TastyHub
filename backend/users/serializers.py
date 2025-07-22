@@ -1,7 +1,9 @@
-import base64, uuid
+import base64
+import uuid
+
 from djoser.serializers import (
     UserCreateSerializer as DjoserUserCreateSerializer,
-    UserSerializer as DjoserUserSerializer
+    UserSerializer as DjoserUserSerializer,
 )
 from rest_framework import serializers
 from django.core.files.base import ContentFile
@@ -11,7 +13,6 @@ from .models import CustomUser, Subscription
 
 
 class Base64ImageField(serializers.ImageField):
-
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
@@ -22,7 +23,6 @@ class Base64ImageField(serializers.ImageField):
 
 
 class UserCreateSerializer(DjoserUserCreateSerializer):
-
     class Meta(DjoserUserCreateSerializer.Meta):
         model = CustomUser
         fields = (
@@ -41,11 +41,6 @@ class UserSerializer(DjoserUserSerializer):
             'id', 'email', 'username',
             'first_name', 'last_name', 'is_subscribed', 'avatar'
         )
-
-    def get_avatar(self, obj):
-        if obj.avatar:
-            return obj.avatar.url
-        return None
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')

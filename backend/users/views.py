@@ -1,14 +1,13 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
-from rest_framework.pagination import PageNumberPagination
-from rest_framework import permissions, status
 from django.shortcuts import get_object_or_404
+from rest_framework import permissions, status
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import CustomUser, Subscription
-from .serializers import SubscriptionSerializer
-from .serializers import UserSerializer
+from .serializers import SubscriptionSerializer, UserSerializer
 
 
 class SubscribeView(APIView):
@@ -20,12 +19,12 @@ class SubscribeView(APIView):
         if user == author:
             return Response(
                 {'errors': 'Нельзя подписаться на самого себя'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
         if Subscription.objects.filter(user=user, author=author).exists():
             return Response(
                 {'errors': 'Уже подписаны'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
         Subscription.objects.create(user=user, author=author)
         serializer = SubscriptionSerializer(
@@ -43,7 +42,7 @@ class SubscribeView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
             {'errors': 'Подписка не найдена'},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
 
