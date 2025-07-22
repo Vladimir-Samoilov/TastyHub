@@ -4,17 +4,21 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 
 from .models import (
     Recipe, Tag, Ingredient, Favorite, ShoppingCart
 )
 from .serializers import (
     RecipeReadSerializer, RecipeWriteSerializer, TagSerializer,
-    IngredientSerializer, FavoriteSerializer, ShoppingCartSerializer
+    IngredientSerializer, FavoriteSerializer, ShoppingCartSerializer,
+    IngredientInRecipe
 )
 from .filters import RecipeFilter
 from .permissions import IsAuthorOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Sum
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -69,9 +73,43 @@ class RecipeViewSet(viewsets.ModelViewSet):
             request=request, pk=pk
         )
 
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticated]
+    )
+    def download_shopping_cart(self, request):
+        user = request.user
+        ingredients = (
+            IngredientInRecipe.objects.filter(
+                recipe__shopping_cart__user=user
+            )
+            .values(
+                'ingredient__name',
+                'ingredient__measurement_unit'
+            )
+            .annotate(total_amount=Sum('amount'))
+            .order_by('ingredient__name')
+        )
+
+        lines = []
+        for item in ingredients:
+            line = (
+                f"{item['ingredient__name']} "
+                f"({item['ingredient__measurement_unit']}) — "
+                f"{item['total_amount']}"
+            )
+            lines.append(line)
+        content = '\n'.join(lines)
+        response = HttpResponse(content, content_type='text/plain')
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_cart.txt"'
+        )
+        return response
+
     def _handle_custom_action(self, model, serializer_class, request, pk):
         user = request.user
-        recipe = Recipe.objects.get(pk=pk)
+        recipe = get_object_or_404(Recipe, pk=pk)
         if request.method == 'POST':
             obj, created = model.objects.get_or_create(
                 user=user, recipe=recipe
@@ -103,6 +141,27 @@ class RecipeViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
             headers=headers
         )
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        read_serializer = RecipeReadSerializer(
+            serializer.instance, context={'request': request}
+        )
+        return Response(read_serializer.data)
+
+    @action(
+        detail=True, methods=['get'],
+        url_path='get-link',
+        url_name='get-link'
+    )
+    def get_link(self, request, pk=None):
+        recipe = self.get_object()
+        link = request.build_absolute_uri(f'/recipes/{recipe.id}/')
+        return Response({'short-link': link}, status=status.HTTP_200_OK)
 
 
 class RecipeImageView(APIView):

@@ -41,6 +41,13 @@ class IngredientInRecipeWriteSerializer(serializers.ModelSerializer):
         model = IngredientInRecipe
         fields = ('id', 'amount')
 
+    def validate_amount(self, value):
+        if value < 1:
+            raise serializers.ValidationError(
+                'Количество должно быть не менее 1.'
+            )
+        return value
+
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
@@ -77,7 +84,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    ingredients = IngredientInRecipeWriteSerializer(many=True)
+    ingredients = IngredientInRecipeWriteSerializer(many=True, write_only=True)
     tags = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Tag.objects.all()
     )
@@ -115,6 +122,36 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 amount=ing['amount']
             )
         return super().update(instance, validated_data)
+
+    def validate(self, data):
+        ingredients = data.get('ingredients')
+        tags = data.get('tags')
+        if not ingredients or len(ingredients) == 0:
+            raise serializers.ValidationError({
+                'ingredients': 'Поле ingredients не может быть пустым.'
+            })
+        ingredient_ids = [item['ingredient'].id for item in ingredients]
+        if len(ingredient_ids) != len(set(ingredient_ids)):
+            raise serializers.ValidationError({
+                'ingredients': 'Ингредиенты не должны повторяться.'
+            })
+        if not tags or len(tags) == 0:
+            raise serializers.ValidationError({
+                'tags': 'Поле tags не может быть пустым.'
+            })
+        tag_ids = [tag.id for tag in tags]
+        if len(tag_ids) != len(set(tag_ids)):
+            raise serializers.ValidationError({
+                'tags': 'Теги не должны повторяться.'
+            })
+        return data
+
+    def validate_cooking_time(self, value):
+        if value < 1:
+            raise serializers.ValidationError(
+                'Время приготовления должно быть не менее 1 минуты.'
+            )
+        return value
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
