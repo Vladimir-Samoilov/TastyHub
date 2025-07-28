@@ -40,7 +40,7 @@ services:
     ports:
       - "9010:80"
     volumes:
-      - static:/usr/share/nginx/html
+      - static:/static
       - media:/media
     depends_on:
       - backend
