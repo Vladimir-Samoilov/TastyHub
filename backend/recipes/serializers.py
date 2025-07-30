@@ -1,7 +1,11 @@
 from rest_framework import serializers
+
 from users.serializers import Base64ImageField
 
 from .models import Ingredient, IngredientInRecipe, Recipe, Tag
+
+MIN_COOKING_TIME = 1
+MIN_INGREDIENT_AMOUNT = 1
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -41,9 +45,9 @@ class IngredientInRecipeWriteSerializer(serializers.ModelSerializer):
         fields = ('id', 'amount')
 
     def validate_amount(self, value):
-        if value < 1:
+        if value < MIN_INGREDIENT_AMOUNT:
             raise serializers.ValidationError(
-                'Количество должно быть не менее 1.'
+                f'Количество должно быть не менее {MIN_INGREDIENT_AMOUNT}.'
             )
         return value
 
@@ -134,7 +138,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'ingredients': 'Ингредиенты не должны повторяться.'
             })
-        if not tags or len(tags) == 0:
+        if not tags:
             raise serializers.ValidationError({
                 'tags': 'Поле tags не может быть пустым.'
             })
@@ -146,9 +150,10 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return data
 
     def validate_cooking_time(self, value):
-        if value < 1:
+        if value < MIN_COOKING_TIME:
             raise serializers.ValidationError(
-                'Время приготовления должно быть не менее 1 минуты.'
+                f'Время приготовления должно быть не менее '
+                f'{MIN_COOKING_TIME} минуты.'
             )
         return value
 
@@ -157,11 +162,3 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
-
-
-class FavoriteSerializer(ShortRecipeSerializer):
-    pass
-
-
-class ShoppingCartSerializer(ShortRecipeSerializer):
-    pass

@@ -89,6 +89,17 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     def get_recipes_count(self, obj):
         return obj.recipes.count()
 
+    def validate(self, data):
+        user = self.context['request'].user
+        author = data.get('author')
+        if user == author:
+            raise serializers.ValidationError(
+                'Нельзя подписаться на самого себя'
+            )
+        if Subscription.objects.filter(user=user, author=author).exists():
+            raise serializers.ValidationError('Уже подписаны')
+        return data
+
 
 class AvatarUpdateSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(required=True)

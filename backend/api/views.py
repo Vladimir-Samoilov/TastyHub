@@ -9,13 +9,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShoppingCart, Tag)
+from recipes.permissions import IsAuthorOrReadOnly
+from recipes.serializers import (IngredientSerializer, RecipeReadSerializer,
+                                 RecipeWriteSerializer, TagSerializer,
+                                 ShortRecipeSerializer)
 from .filters import RecipeFilter
-from .models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                     ShoppingCart, Tag)
-from .permissions import IsAuthorOrReadOnly
-from .serializers import (FavoriteSerializer, IngredientSerializer,
-                          RecipeReadSerializer, RecipeWriteSerializer,
-                          ShoppingCartSerializer, TagSerializer)
+from .utils import generate_shopping_cart_content
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -26,15 +27,15 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = None
 
     def get_queryset(self):
+        queryset = Ingredient.objects.all()
         name = self.request.query_params.get('name')
         if name:
-            return self.queryset.filter(name__istartswith=name)
+            return queryset.filter(name__istartswith=name)
         return self.queryset
 
 
@@ -63,7 +64,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk):
         return self._handle_custom_action(
             model=Favorite,
-            serializer_class=FavoriteSerializer,
+            serializer_class=ShortRecipeSerializer,
             request=request,
             pk=pk
         )
@@ -76,7 +77,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk):
         return self._handle_custom_action(
             model=ShoppingCart,
-            serializer_class=ShoppingCartSerializer,
+            serializer_class=ShortRecipeSerializer,
             request=request,
             pk=pk
         )
@@ -99,16 +100,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             .annotate(total_amount=Sum('amount'))
             .order_by('ingredient__name')
         )
-
-        lines = []
-        for item in ingredients:
-            line = (
-                f"{item['ingredient__name']} "
-                f"({item['ingredient__measurement_unit']}) — "
-                f"{item['total_amount']}"
-            )
-            lines.append(line)
-        content = '\n'.join(lines)
+        content = generate_shopping_cart_content(ingredients)
         response = HttpResponse(content, content_type='text/plain')
         response['Content-Disposition'] = (
             'attachment; filename="shopping_cart.txt"'

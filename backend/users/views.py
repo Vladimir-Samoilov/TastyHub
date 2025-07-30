@@ -6,9 +6,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import CustomUser, Subscription
-from .serializers import (AvatarUpdateSerializer, SubscriptionSerializer,
-                          UserSerializer)
+from .models import User, Subscription
+from .serializers import (
+    AvatarUpdateSerializer, SubscriptionSerializer, UserSerializer
+)
+
+MAX_PAGE_SIZE = 100
 
 
 class SubscribeView(APIView):
@@ -16,26 +19,18 @@ class SubscribeView(APIView):
 
     def post(self, request, id):
         user = request.user
-        author = get_object_or_404(CustomUser, id=id)
-        if user == author:
-            return Response(
-                {'errors': 'Нельзя подписаться на самого себя'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if Subscription.objects.filter(user=user, author=author).exists():
-            return Response(
-                {'errors': 'Уже подписаны'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        Subscription.objects.create(user=user, author=author)
+        author = get_object_or_404(User, id=id)
+        data = {'user': user.id, 'author': author.id}
         serializer = SubscriptionSerializer(
-            author, context={'request': request}
+            data=data, context={'request': request}
         )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id):
         user = request.user
-        author = get_object_or_404(CustomUser, id=id)
+        author = get_object_or_404(User, id=id)
         deleted, _ = Subscription.objects.filter(
             user=user, author=author
         ).delete()
@@ -49,7 +44,7 @@ class SubscribeView(APIView):
 
 class LimitPagination(PageNumberPagination):
     page_size_query_param = 'limit'
-    max_page_size = 100
+    max_page_size = MAX_PAGE_SIZE
 
 
 class SubscriptionsView(APIView):
@@ -57,7 +52,7 @@ class SubscriptionsView(APIView):
 
     def get(self, request):
         user = request.user
-        authors = CustomUser.objects.filter(subscribers__user=user)
+        authors = User.objects.filter(subscribers__user=user)
         paginator = LimitPagination()
         page = paginator.paginate_queryset(authors, request, view=self)
         serializer = SubscriptionSerializer(
@@ -72,7 +67,10 @@ class AvatarView(APIView):
 
     def get(self, request):
         serializer = UserSerializer(request.user, context={'request': request})
-        return Response({'avatar': serializer.data['avatar']}, status=200)
+        return Response(
+            {'avatar': serializer.data['avatar']},
+            status=status.HTTP_200_OK
+        )
 
     def put(self, request):
         user = request.user
@@ -81,8 +79,11 @@ class AvatarView(APIView):
         )
         if serializer.is_valid():
             serializer.save()
-            return Response({'avatar': serializer.data['avatar']}, status=200)
-        return Response(serializer.errors, status=400)
+            return Response(
+                {'avatar': serializer.data['avatar']},
+                status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request):
         user = request.user
@@ -90,4 +91,4 @@ class AvatarView(APIView):
             user.avatar.delete(save=True)
             user.avatar = None
             user.save()
-        return Response(status=204)
+        return Response(status=status.HTTP_204_NO_CONTENT)
