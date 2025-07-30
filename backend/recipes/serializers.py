@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from users.serializers import Base64ImageField
-
 from .models import Ingredient, IngredientInRecipe, Recipe, Tag
 
 MIN_COOKING_TIME = 1
