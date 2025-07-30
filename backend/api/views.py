@@ -9,12 +9,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                            ShoppingCart, Tag)
+from recipes.models import (
+    Favorite, Ingredient, IngredientInRecipe, Recipe,
+    ShoppingCart, Tag,
+)
 from recipes.permissions import IsAuthorOrReadOnly
-from recipes.serializers import (IngredientSerializer, RecipeReadSerializer,
-                                 RecipeWriteSerializer, ShortRecipeSerializer,
-                                 TagSerializer)
+from recipes.serializers import (
+    IngredientSerializer, RecipeReadSerializer, RecipeWriteSerializer,
+    ShortRecipeSerializer, TagSerializer,
+)
+
 from .filters import RecipeFilter
 from .utils import generate_shopping_cart_content
 
