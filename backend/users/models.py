@@ -5,7 +5,7 @@ FIRST_NAME_MAX_LENGTH = 150
 LAST_NAME_MAX_LENGTH = 150
 
 
-class CustomUser(AbstractUser):
+class User(AbstractUser):
     email = models.EmailField('Email', unique=True)
     first_name = models.CharField('Имя', max_length=FIRST_NAME_MAX_LENGTH)
     last_name = models.CharField('Фамилия', max_length=LAST_NAME_MAX_LENGTH)
@@ -23,10 +23,10 @@ class CustomUser(AbstractUser):
 
 class Subscription(models.Model):
     user = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name='follower'
+        User, on_delete=models.CASCADE, related_name='follower'
     )
     author = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name='subscribers'
+        User, on_delete=models.CASCADE, related_name='subscribers'
     )
 
     class Meta:

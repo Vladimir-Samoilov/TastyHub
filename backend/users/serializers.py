@@ -8,7 +8,7 @@ from djoser.serializers import UserSerializer as DjoserUserSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import NotAuthenticated
 
-from .models import CustomUser, Subscription
+from .models import User, Subscription
 
 
 class Base64ImageField(serializers.ImageField):
@@ -23,7 +23,7 @@ class Base64ImageField(serializers.ImageField):
 
 class UserCreateSerializer(DjoserUserCreateSerializer):
     class Meta(DjoserUserCreateSerializer.Meta):
-        model = CustomUser
+        model = User
         fields = (
             'id', 'email', 'username',
             'first_name', 'last_name', 'password',
@@ -35,7 +35,7 @@ class UserSerializer(DjoserUserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = (
             'id', 'email', 'username',
             'first_name', 'last_name', 'is_subscribed', 'avatar'
@@ -64,7 +64,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     avatar = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = (
             'id', 'email', 'username', 'first_name', 'last_name',
             'is_subscribed', 'recipes', 'recipes_count', 'avatar'
@@ -105,5 +105,5 @@ class AvatarUpdateSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(required=True)
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = ('avatar',)

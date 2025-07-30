@@ -1,9 +1,8 @@
-from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer
+from recipes.models import Recipe
 
-from ..recipes.models import Recipe
 
-
-class ShortRecipeSerializer(serializers.ModelSerializer):
+class ShortRecipeSerializer(ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
