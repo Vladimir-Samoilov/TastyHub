@@ -6,10 +6,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import User, Subscription
-from .serializers import (
-    AvatarUpdateSerializer, SubscriptionSerializer, UserSerializer
-)
+from .models import Subscription, User
+from .serializers import (AvatarUpdateSerializer, SubscriptionSerializer,
+                          UserSerializer)
 
 MAX_PAGE_SIZE = 100
 
