@@ -178,17 +178,26 @@ class RecipeImageView(APIView):
     def get(self, request, pk):
         recipe = Recipe.objects.get(pk=pk)
         serializer = RecipeReadSerializer(recipe, context={'request': request})
-        return Response({'image': serializer.data['image']}, status=200)
+        return Response(
+            {'image': serializer.data['image']},
+            status=status.HTTP_200_OK
+        )
 
     def put(self, request, pk):
         recipe = Recipe.objects.get(pk=pk)
         image = request.data.get('image')
         if not image:
-            return Response({'errors': 'No file provided'}, status=400)
+            return Response(
+                {'errors': 'No file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         recipe.image = image
         recipe.save()
         serializer = RecipeReadSerializer(recipe, context={'request': request})
-        return Response({'image': serializer.data['image']}, status=200)
+        return Response(
+            {'image': serializer.data['image']},
+            status=status.HTTP_200_OK
+        )
 
     def delete(self, request, pk):
         recipe = Recipe.objects.get(pk=pk)
@@ -197,4 +206,4 @@ class RecipeImageView(APIView):
             recipe.image.delete(save=True)
         recipe.image = None
         recipe.save()
-        return Response(status=204)
+        return Response(status=status.HTTP_204_NO_CONTENT)
