@@ -36,7 +36,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
         name = self.request.query_params.get('name')
         if name:
             return queryset.filter(name__istartswith=name)
-        return self.queryset
+        return queryset
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from .models import Subscription, User
 from .serializers import (AvatarUpdateSerializer, SubscriptionSerializer,
-                          UserSerializer)
+                          SubscriptionCreateSerializer, UserSerializer)
 
 MAX_PAGE_SIZE = 100
 
@@ -20,12 +20,15 @@ class SubscribeView(APIView):
         user = request.user
         author = get_object_or_404(User, id=id)
         data = {'user': user.id, 'author': author.id}
-        serializer = SubscriptionSerializer(
+        serializer = SubscriptionCreateSerializer(
             data=data, context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        output_serializer = SubscriptionSerializer(
+            author, context={'request': request}
+        )
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id):
         user = request.user
@@ -74,7 +77,7 @@ class AvatarView(APIView):
     def put(self, request):
         user = request.user
         serializer = AvatarUpdateSerializer(
-            user, data=request.data, partial=True
+            user, data=request.data, partial=False
         )
         if serializer.is_valid():
             serializer.save()
