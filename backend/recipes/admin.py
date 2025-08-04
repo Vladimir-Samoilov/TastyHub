@@ -6,7 +6,7 @@ from .models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'color', 'slug')
+    list_display = ('id', 'name', 'slug')
     search_fields = ('name', 'slug')
 
 
@@ -19,6 +19,8 @@ class IngredientAdmin(admin.ModelAdmin):
 class IngredientInRecipeInline(admin.TabularInline):
     model = IngredientInRecipe
     extra = 1
+    min_num = 1
+    validate_min = True
 
 
 @admin.register(Recipe)
