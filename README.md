@@ -1,8 +1,7 @@
-# Foodgram
+# TastyHub
 
-**Foodgram** — платформа для публикации и поиска рецептов, составления списка покупок и подписки на любимых авторов.
+**TastyHub** — платформа для публикации и поиска рецептов, составления списка покупок и подписки на любимых авторов.
 
-[![foodgram](https://img.shields.io/badge/Deployed_on-bestfoodgram.sytes.net-blue)](https://bestfoodgram.sytes.net)
 
 ---
 
@@ -18,7 +17,7 @@
 
 ## Описание
 
-**Foodgram** — это проект, где:
+**TastyHub** — это проект, где:
 
 - можно публиковать свои рецепты;
 - искать рецепты по ингредиентам и тегам;
@@ -45,8 +44,8 @@
 ### 1. Клонирование репозитория
 
 ```bash
-git clone https://github.com/Vladimir-Samoilov/foodgram.git
-cd foodgram
+git clone https://github.com/Vladimir-Samoilov/tastyhub.git
+cd tastyhub
 ```
 
 ### 2. Переменные окружения
@@ -55,14 +54,14 @@ cd foodgram
 
 ```env
 DB_ENGINE=django.db.backends.postgresql
-DB_NAME=foodgram
+DB_NAME=tastyhub
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres_password
 DB_HOST=db
 DB_PORT=5432
 
 DEBUG=False
-ALLOWED_HOSTS=bestfoodgram.sytes.net,127.0.0.1,localhost,backend
+ALLOWED_HOSTS=127.0.0.1,localhost,backend
 SECRET_KEY=your_secret_key
 ```
 
@@ -111,5 +110,3 @@ sudo docker compose -f docker-compose.production.yml exec backend python manage.
 ## Контакты
 
 Автор: Владимир Самойлов
-
-Проект развёрнут: <https://bestfoodgram.sytes.net>
